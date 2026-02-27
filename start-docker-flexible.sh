@@ -4,6 +4,7 @@ set -e
 
 echo "🚀 Starting NetCore RDP Docker Solution (Flexible IP)"
 echo "=================================================="
+echo "📦 Using pre-built frontend binaries (no Node.js build required)"
 
 # No server IP detection needed - frontend will use browser's hostname
 echo "🌐 Using browser-based IP detection (no server-side IP detection)"

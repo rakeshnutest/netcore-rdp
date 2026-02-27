@@ -86,7 +86,11 @@ GUACAMOLE_PORT=8017
 
 ## 🔨 Frontend Build Process
 
+### **Pre-Built Frontend Binaries:**
+The repository includes pre-built frontend binaries in `frontend/dist/`, so **no Node.js or build step is required** for deployment.
+
 ### **When to Rebuild Frontend:**
+Only rebuild if you modify React components:
 - After modifying React components
 - After updating API endpoints
 - After changing UI functionality
@@ -300,4 +304,4 @@ For issues or questions:
 
 ---
 
-**🎯 Perfect for VM templates, cloud deployments, and automated infrastructure!**# NetCore RDP Docker - Containerized RDP Gateway Solution
+**🎯 Perfect for VM templates, cloud deployments, and automated infrastructure!**
