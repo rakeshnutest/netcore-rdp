@@ -1,0 +1,129 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database for Guacamole
+  postgres:
+    image: postgres:15-alpine
+    container_name: netcore-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: guacamole_db
+      POSTGRES_USER: guacamole_user
+      POSTGRES_PASSWORD: guacamole_pass
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./guacamole/initdb.sql:/docker-entrypoint-initdb.d/01-initdb.sql:ro
+    networks:
+      - netcore-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U guacamole_user -d guacamole_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Guacamole Daemon
+  guacd:
+    image: guacamole/guacd:latest
+    container_name: netcore-guacd
+    restart: unless-stopped
+    networks:
+      - netcore-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "4822"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Guacamole Web Application
+  guacamole:
+    image: guacamole/guacamole:latest
+    container_name: netcore-guacamole
+    restart: unless-stopped
+    ports:
+      - "${GUACAMOLE_PORT:-7013}:8080"
+    environment:
+      GUACD_HOSTNAME: guacd
+      GUACD_PORT: 4822
+      POSTGRESQL_HOSTNAME: postgres
+      POSTGRESQL_DATABASE: guacamole_db
+      POSTGRESQL_USERNAME: guacamole_user
+      POSTGRESQL_PASSWORD: guacamole_pass
+      GUACAMOLE_HOME: /etc/guacamole
+      QUICKCONNECT_ENABLED: "true"
+      JSON_ENABLED: "true"
+      JSON_SECRET_KEY: "${GUACAMOLE_JSON_SECRET_KEY:-4c0b569e4c96df157eee1b65dd0e4d41}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      guacd:
+        condition: service_healthy
+    networks:
+      - netcore-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/guacamole/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Backend Service
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      args:
+        - HOST_IP=${HOST_IP:-localhost}
+    container_name: netcore-backend
+    restart: unless-stopped
+    ports:
+      - "${BACKEND_PORT:-7012}:4000"
+    environment:
+      - PORT=4000
+      - NODE_ENV=production
+      - HOST_IP=${HOST_IP:-localhost}
+      - GUACAMOLE_PORT=${GUACAMOLE_PORT:-7013}
+      - GUACAMOLE_JSON_SECRET_KEY=${GUACAMOLE_JSON_SECRET_KEY:-4c0b569e4c96df157eee1b65dd0e4d41}
+      - JWT_SECRET=${JWT_SECRET:-netcore-rdp-secret-change-in-production}
+    volumes:
+      - backend-data:/app/data
+    depends_on:
+      guacamole:
+        condition: service_healthy
+    networks:
+      - netcore-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Frontend Service
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        - VITE_API_URL=http://${HOST_IP:-localhost}:${BACKEND_PORT:-7012}
+    container_name: netcore-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-7011}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - netcore-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres-data:
+    driver: local
+  backend-data:
+    driver: local
+
+networks:
+  netcore-network:
+    driver: bridge
