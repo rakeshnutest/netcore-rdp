@@ -300,4 +300,4 @@ For issues or questions:
 
 ---
 
-**🎯 Perfect for VM templates, cloud deployments, and automated infrastructure!**
+**🎯 Perfect for VM templates, cloud deployments, and automated infrastructure!**# NetCore RDP Docker - Containerized RDP Gateway Solution
