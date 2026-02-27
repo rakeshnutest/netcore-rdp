@@ -10,13 +10,23 @@ A containerized RDP gateway solution using Apache Guacamole with a modern React 
    ```bash
    ./start-docker-flexible.sh
    ```
+   
+   **What the script does:**
+   - Builds and starts all Docker containers
+   - Automatically initializes Guacamole database schema
+   - Configures browser-based IP detection
+   - Provides access URLs and credentials
 
 2. **Access the interface:**
    - Frontend: `http://YOUR_VM_IP:7015`
    - Backend API: `http://YOUR_VM_IP:7016/api`
-   - Guacamole: `http://YOUR_VM_IP:7017`
+   - Guacamole: `http://YOUR_VM_IP:7017/guacamole/`
 
-3. **Connect to RDP:**
+3. **Default Guacamole Login:**
+   - Username: `guacadmin`
+   - Password: `guacadmin`
+
+4. **Connect to RDP:**
    - Use the "Direct Access" tab
    - Enter target IP, username, password
    - Click "Establish Connection"

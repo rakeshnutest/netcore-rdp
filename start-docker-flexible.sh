@@ -53,6 +53,32 @@ docker-compose up -d
 echo "⏳ Waiting for services to start..."
 sleep 10
 
+# Initialize Guacamole database if needed
+echo "🗄️ Initializing Guacamole database..."
+if ! docker-compose exec -T postgres psql -U guacamole_user -d guacamole_db -c "SELECT 1 FROM guacamole_user LIMIT 1;" >/dev/null 2>&1; then
+    echo "📋 Database schema not found, initializing..."
+    
+    # Generate schema
+    docker run --rm guacamole/guacamole /opt/guacamole/bin/initdb.sh --postgresql > /tmp/initdb.sql 2>/dev/null
+    
+    # Apply schema
+    if docker-compose exec -T postgres psql -U guacamole_user -d guacamole_db < /tmp/initdb.sql >/dev/null 2>&1; then
+        echo "✅ Database schema initialized successfully"
+        
+        # Restart Guacamole to connect to initialized database
+        echo "🔄 Restarting Guacamole..."
+        docker-compose restart guacamole >/dev/null 2>&1
+        sleep 5
+    else
+        echo "⚠️ Database initialization failed, but continuing..."
+    fi
+    
+    # Cleanup
+    rm -f /tmp/initdb.sql
+else
+    echo "✅ Database already initialized"
+fi
+
 # Check service health
 echo "🔍 Checking service status..."
 echo ""
@@ -87,9 +113,13 @@ if [ "$all_healthy" = true ]; then
     echo "   Backend:    http://<YOUR_VM_IP>:7016"
     echo "   Guacamole:  http://<YOUR_VM_IP>:7017"
     echo ""
-    echo "🔐 Default login credentials:"
-    echo "   Username: root"
-    echo "   Password: <your_password>"
+    echo "🔐 Guacamole login credentials:"
+    echo "   Username: guacadmin"
+    echo "   Password: guacadmin"
+    echo ""
+    echo "🔐 RDP connection credentials:"
+    echo "   Username: <your_rdp_username>"
+    echo "   Password: <your_rdp_password>"
     echo ""
     echo "💡 The system uses browser-based IP detection:"
     echo "   • Frontend: Uses window.location.hostname (browser's current IP)"
