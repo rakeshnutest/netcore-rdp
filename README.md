@@ -10,13 +10,23 @@ A containerized RDP gateway solution using Apache Guacamole with a modern React 
    ```bash
    ./start-docker-flexible.sh
    ```
+   
+   **What the script does:**
+   - Builds and starts all Docker containers
+   - Automatically initializes Guacamole database schema
+   - Configures browser-based IP detection
+   - Provides access URLs and credentials
 
 2. **Access the interface:**
    - Frontend: `http://YOUR_VM_IP:7015`
    - Backend API: `http://YOUR_VM_IP:7016/api`
-   - Guacamole: `http://YOUR_VM_IP:7017`
+   - Guacamole: `http://YOUR_VM_IP:7017/guacamole/`
 
-3. **Connect to RDP:**
+3. **Default Guacamole Login:**
+   - Username: `guacadmin`
+   - Password: `guacadmin`
+
+4. **Connect to RDP:**
    - Use the "Direct Access" tab
    - Enter target IP, username, password
    - Click "Establish Connection"
@@ -32,7 +42,7 @@ A containerized RDP gateway solution using Apache Guacamole with a modern React 
                                 │                        │
                                 ▼                        ▼
                        ┌─────────────────┐    ┌─────────────────┐
-                       │   PostgreSQL    │    │     Guacd       │
+                       │     MySQL       │    │     Guacd       │
                        │   Database      │    │    Daemon       │
                        └─────────────────┘    └─────────────────┘
 ```
@@ -68,9 +78,10 @@ BACKEND_PORT=7016
 GUACAMOLE_PORT=7017
 
 # Database Configuration
-POSTGRES_DB=guacamole_db
-POSTGRES_USER=guacamole_user
-POSTGRES_PASSWORD=guacamole_pass
+MYSQL_ROOT_PASSWORD=guacamole_root_pass
+MYSQL_DATABASE=guacamole_db
+MYSQL_USER=guacamole_user
+MYSQL_PASSWORD=guacamole_pass
 
 # Guacamole Configuration
 GUACAMOLE_SECRET_KEY=your-secret-key-here
@@ -86,7 +97,11 @@ GUACAMOLE_PORT=8017
 
 ## 🔨 Frontend Build Process
 
+### **Pre-Built Frontend Binaries:**
+The repository includes pre-built frontend binaries in `frontend/dist/`, so **no Node.js or build step is required** for deployment.
+
 ### **When to Rebuild Frontend:**
+Only rebuild if you modify React components:
 - After modifying React components
 - After updating API endpoints
 - After changing UI functionality
